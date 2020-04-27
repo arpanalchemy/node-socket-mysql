@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<form onsubmit="return sendNickname();" id="nicknameBox">
+    <input type="text" id="nickName" placeholder="Add Your Name to start chat">
+    <input type="submit" value="Start">
+</form>
+
+<form onsubmit="return sendMessage();" id="messageBox" style="display: none">
+    <input type="text" id="message" placeholder="send message">
+    <input type="submit" value="Send Message">
+</form>
+
+<!-- list where all messages will be displayed -->
+
+<ul id="messages"></ul>
+<script src="js/jquery.min.js"></script>
+<script src="js/socket.io.js"></script>
+<script>
+    var server = "http://localhost:3000";
+    var io = io(server);
+
+    $.ajax({
+        url: server + "/get_messages",
+        method: "GET",
+        success: function (response) {
+            let messages = document.getElementById("messages");
+            // parse JSON
+            let resObj = JSON.parse(response);
+            resObj.forEach(data => {
+                //display message
+                // creates new DOM
+                let li = document.createElement("li");
+
+                // give it unique ID
+                li.id = "message_" + data.id;
+                // add message content as HTML
+                li.innerHTML = data.message;
+                li.innerHTML += "<button data-id='" + data.id + "' onclick='deleteMessage(this);'>Delete</button>";
+                // append at the end of list
+                messages.append(li);
+            })
+        }
+    });
+
+    // set nickname
+    function sendNickname() {
+        // send request to server
+        // get nickName
+        let nickName = document.getElementById("nickName");
+        //sending nickName from client
+        io.emit("send_nickname", nickName.value);
+        document.getElementById("messageBox").style.display = "block";
+        document.getElementById("nicknameBox").style.display = "none";
+        // $("#messageBox").attr("display", "block");
+        return false;
+    }
+
+    // delete
+    function deleteMessage(self) {
+        // send request to server
+        io.emit("delete_message", self.getAttribute("data-id"));
+    }
+
+    function sendMessage() {
+        // get message
+        let message = document.getElementById("message");
+        //sending message from client
+        io.emit("new_message", message.value);
+
+        // this is to prevent form to submitting
+        return false;
+    }
+
+    // client will listen from server
+    io.on("new_message", function (data) {
+        console.log("Server says", data);
+
+        let li = document.createElement("li");
+
+        // give it unique ID
+        li.id = "message_" + data.id;
+        // add message content as HTML
+        li.innerHTML = data.message;
+
+        li.innerHTML += "<button data-id='" + data.id + "' onclick='deleteMessage(this);'>Delete</button>";
+
+        let messages = document.getElementById("messages");
+        messages.append(li);
+    });
+
+    // attach listener for delete_message event
+    io.on("delete_message", function (messageID) {
+        // get node by ID
+        var node = document.getElementById("message_" + messageID);
+        node.innerHTML = "This message has been deleted";
+    });
+</script>
+</body>
+</html>
