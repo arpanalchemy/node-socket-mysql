@@ -31,15 +31,23 @@ connection.connect(function (error, result) {
     // show error,  if any
 });
 
+// var users = [];
 // add listener for new connection
 io.on("connection", function (socket) {
     // this is socket for each user
     // server should listen from each client via its socket
     // set nickname of user
-    socket.on("send_nickname", function (data) {
+    socket.on("user_connected", function (userName) {
         console.log("User connected", socket.id);
-        socket.nickname = data;
-        console.log("Client Name is", data);
+        socket.nickname = userName;
+        console.log("Client Name is", userName);
+        // save name in array
+        // users[userName] = socket.id;
+
+        // socket ID will be used to send message individual person
+
+        // notify all connected clients
+        io.emit("user_connected", userName)
     });
 
     // server should listen from each client via its socket

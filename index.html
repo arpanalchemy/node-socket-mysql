@@ -13,6 +13,10 @@
     <input type="submit" value="Start">
 </form>
 
+<!-- list where all users will be displayed -->
+
+<ul id="users"></ul>
+
 <form onsubmit="return sendMessage();" id="messageBox" style="display: none">
     <input type="text" id="message" placeholder="send message">
     <input type="submit" value="Send Message">
@@ -26,6 +30,9 @@
 <script>
     var server = "http://localhost:3000";
     var io = io(server);
+
+    let receiver = "";
+    let sender = "";
 
     $.ajax({
         url: server + "/get_messages",
@@ -54,12 +61,14 @@
     function sendNickname() {
         // send request to server
         // get nickName
-        let nickName = document.getElementById("nickName");
+        let nickName = document.getElementById("nickName").value;
         //sending nickName from client
-        io.emit("send_nickname", nickName.value);
+        io.emit("user_connected", nickName);
+        sender = nickName;
         document.getElementById("messageBox").style.display = "block";
         document.getElementById("nicknameBox").style.display = "none";
         // $("#messageBox").attr("display", "block");
+        document.getElementById("nickName").value = "";
         return false;
     }
 
@@ -71,9 +80,9 @@
 
     function sendMessage() {
         // get message
-        let message = document.getElementById("message");
+        let message = document.getElementById("message").value;
         //sending message from client
-        io.emit("new_message", message.value);
+        io.emit("new_message", message);
 
         // this is to prevent form to submitting
         return false;
@@ -102,6 +111,22 @@
         var node = document.getElementById("message_" + messageID);
         node.innerHTML = "This message has been deleted";
     });
+
+    // attach listener for user_connected event
+    io.on("user_connected", function (userName) {
+        // get node by ID
+        console.log("userName", userName);
+
+        let html = "";
+        html += "<li><button onclick='onUserSelected(this.innerHTML);'>" + userName + "</button></li><br>";
+
+        document.getElementById("users").innerHTML += html;
+    });
+
+    function onUserSelected(userName) {
+        console.log('selected user', userName);
+        receiver = userName;
+    }
 </script>
 </body>
 </html>
