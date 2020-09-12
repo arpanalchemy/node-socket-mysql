@@ -28,34 +28,13 @@
 <script src="js/jquery.min.js"></script>
 <script src="js/socket.io.js"></script>
 <script>
-    var server = "http://localhost:3000";
+    var server = "http://localhost:8080";
     var io = io(server);
 
     let receiver = "";
     let sender = "";
 
-    $.ajax({
-        url: server + "/get_messages",
-        method: "GET",
-        success: function (response) {
-            let messages = document.getElementById("messages");
-            // parse JSON
-            let resObj = JSON.parse(response);
-            resObj.forEach(data => {
-                //display message
-                // creates new DOM
-                let li = document.createElement("li");
-
-                // give it unique ID
-                li.id = "message_" + data.id;
-                // add message content as HTML
-                li.innerHTML = data.message;
-                li.innerHTML += "<button data-id='" + data.id + "' onclick='deleteMessage(this);'>Delete</button>";
-                // append at the end of list
-                messages.append(li);
-            })
-        }
-    });
+    io.emit("Post.index", 'all posts');
 
     // set nickname
     function sendNickname() {
@@ -63,7 +42,7 @@
         // get nickName
         let nickName = document.getElementById("nickName").value;
         //sending nickName from client
-        io.emit("user_connected", nickName);
+        io.emit("Post.index", nickName);
         sender = nickName;
         document.getElementById("messageBox").style.display = "block";
         document.getElementById("nicknameBox").style.display = "none";
@@ -89,26 +68,28 @@
     }
 
     // client will listen from server
-    io.on("new_message", function (data) {
+    io.on("Post.index", function (data) {
         console.log("Server says", data);
+        data.forEach(post => {
+            //display message
+            // creates new DOM
+            let li = document.createElement("li");
 
-        let li = document.createElement("li");
+            // give it unique ID
+            li.id = "content_" + post.id;
+            // add message content as HTML
+            li.innerHTML = post.content;
+            li.innerHTML += " ---> <button data-id='" + post.id + "' onclick='deleteMessage(this);'>Delete</button>";
+            // append at the end of list
+            messages.append(li);
+        })
 
-        // give it unique ID
-        li.id = "message_" + data.id;
-        // add message content as HTML
-        li.innerHTML = data.message;
-
-        li.innerHTML += "<button data-id='" + data.id + "' onclick='deleteMessage(this);'>Delete</button>";
-
-        let messages = document.getElementById("messages");
-        messages.append(li);
     });
 
     // attach listener for delete_message event
     io.on("delete_message", function (messageID) {
         // get node by ID
-        var node = document.getElementById("message_" + messageID);
+        var node = document.getElementById("name_" + messageID);
         node.innerHTML = "This message has been deleted";
     });
 
