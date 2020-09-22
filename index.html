@@ -8,9 +8,15 @@
     <title>Document</title>
 </head>
 <body>
+<h6>Total Online Users: <span id="clientsCount">0</span></h6>
 <form onsubmit="return sendNickname();" id="nicknameBox">
     <input type="text" id="nickName" placeholder="Add Your Name to start chat">
+    <input type="file" id="imagefile" placeholder="upload your file">
+    <input type="hidden" id="attachmentFile" placeholder="upload your file">
     <input type="submit" value="Start">
+
+    <br>
+    <img src="" alt="noimg" width="500px" height="500px" id="imgPreview" style="display:none">
 </form>
 
 <!-- list where all users will be displayed -->
@@ -34,63 +40,49 @@
     let receiver = "";
     let sender = "";
 
-    io.emit("Post.index", 'all posts');
+    io.emit("Post.index", {organizationId: 0, page: 1, limit: 3});
 
     // set nickname
     function sendNickname() {
-        // send request to server
-        // get nickName
-        let nickName = document.getElementById("nickName").value;
+        let image = document.getElementById("attachmentFile").value;
         //sending nickName from client
-        io.emit("Post.index", nickName);
-        sender = nickName;
-        document.getElementById("messageBox").style.display = "block";
-        document.getElementById("nicknameBox").style.display = "none";
-        // $("#messageBox").attr("display", "block");
-        document.getElementById("nickName").value = "";
+        io.emit("Post.created", {
+            organization_id: 1,
+            user_id: 1,
+            content: 'test',
+            post_visibility: 'public',
+            attachments: image
+        });
         return false;
-    }
-
-    // delete
-    function deleteMessage(self) {
-        // send request to server
-        io.emit("delete_message", self.getAttribute("data-id"));
     }
 
     function sendMessage() {
         // get message
-        let message = document.getElementById("message").value;
-        //sending message from client
-        io.emit("new_message", message);
-
-        // this is to prevent form to submitting
         return false;
     }
 
     // client will listen from server
     io.on("Post.index", function (data) {
-        console.log("Server says", data);
-        data.forEach(post => {
-            //display message
-            // creates new DOM
-            let li = document.createElement("li");
-
-            // give it unique ID
-            li.id = "content_" + post.id;
-            // add message content as HTML
-            li.innerHTML = post.content;
-            li.innerHTML += " ---> <button data-id='" + post.id + "' onclick='deleteMessage(this);'>Delete</button>";
-            // append at the end of list
-            messages.append(li);
-        })
-
+        console.log('data', data);
+        if (data && data[1] > 0) {
+            data[0].forEach(post => {
+                let li = document.createElement("li");
+                li.id = "content_" + post.id;
+                li.innerHTML = post.content;
+                messages.append(li);
+            })
+        }
     });
 
     // attach listener for delete_message event
-    io.on("delete_message", function (messageID) {
-        // get node by ID
-        var node = document.getElementById("name_" + messageID);
-        node.innerHTML = "This message has been deleted";
+    io.on("Post.created", function (postData) {
+        console.log('postData', postData);
+    });
+
+    // attach listener for delete_message event
+    io.on("clientsCount", function (clientsCount) {
+        let node = document.getElementById("clientsCount");
+        node.innerHTML = clientsCount;
     });
 
     // attach listener for user_connected event
@@ -108,6 +100,29 @@
         console.log('selected user', userName);
         receiver = userName;
     }
+
+    //Bind the onchange event for the file input
+    //using jQuery.
+    $('#imagefile').on('change', function (e) {
+        //Get the first (and only one) file element
+        //that is included in the original event
+        var file = e.originalEvent.target.files[0],
+            reader = new FileReader();
+        //When the file has been read...
+        reader.onload = function (evt) {
+            //Because of how the file was read,
+            //evt.target.result contains the image in base64 format
+            //Nothing special, just creates an img element
+            //and appends it to the DOM so my UI shows
+            //that I posted an image.
+            //send the image via Socket.io
+            $('#imgPreview').show();
+            $('#imgPreview').attr('src', evt.target.result);
+            $('#attachmentFile').val(evt.target.result);
+        };
+        //And now, read the image and base64
+        reader.readAsDataURL(file);
+    });
 </script>
 </body>
 </html>

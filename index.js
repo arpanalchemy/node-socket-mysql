@@ -95,5 +95,5 @@ app.get("/get_messages", function (request, response) {
 // start the server
 let port = 3000;
 http.listen(port, () => {
-    console.log('server is running on port', port);
+    console.log("development server started on http://localhost:" + port);
 });
