@@ -41,17 +41,20 @@
     let sender = "";
 
     io.emit("Post.index", {organizationId: 0, page: 1, limit: 3});
+    io.emit("Post.get", 17);
 
     // set nickname
     function sendNickname() {
         let image = document.getElementById("attachmentFile").value;
         //sending nickName from client
         io.emit("Post.created", {
-            organization_id: 1,
-            user_id: 1,
-            content: 'test',
+            organization_id: 0,
+            user_id: 131,
+            content: 'new post by arpan with image',
             post_visibility: 'public',
-            attachments: image
+            attachments: [
+                image
+            ]
         });
         return false;
     }

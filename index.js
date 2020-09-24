@@ -91,7 +91,6 @@ app.get("/get_messages", function (request, response) {
     });
 });
 
-
 // start the server
 let port = 3000;
 http.listen(port, () => {
